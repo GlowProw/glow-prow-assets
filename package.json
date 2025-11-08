@@ -6,6 +6,7 @@
   "files": [
     "items",
     "ships",
+    "commodities",
     "factions",
     "weapons",
     "modifications",
