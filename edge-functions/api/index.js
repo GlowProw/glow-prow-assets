@@ -1,3 +1,5 @@
+const DEBUG = true
+const ORIGIN_URL = 'https://assets.glow-prow.org.cn'
 const RESOURCE_CONFIG = {
     basePaths: {
         items: [
@@ -43,7 +45,7 @@ function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
 }
 
 async function getEmptyImageResponse(context) {
-    const url = new URL('https://assets.glow-prow.org.cn');
+    const url = new URL(ORIGIN_URL);
     const emptyImageUrl = new URL('/empty.webp', url);
     const response = await fetch(emptyImageUrl);
 
@@ -53,7 +55,7 @@ async function getEmptyImageResponse(context) {
             status: 200,
             headers: {
                 'Content-Type': response.headers.get('content-type') || 'image/png',
-                'Cache-Control': 'public, max-age=86400'
+                'Cache-Control': `public, max-age=${30 * 60000}`
             }
         });
     }
@@ -91,7 +93,7 @@ export default async function onRequestGet(context) {
 
         for (const pattern of patterns) {
             try {
-                const imageUrl = new URL(pattern, url.origin);
+                const imageUrl = new URL(pattern, DEBUG ? ORIGIN_URL : url.origin);
                 const response = await fetch(imageUrl);
 
                 if (response.ok) {
@@ -112,7 +114,6 @@ export default async function onRequestGet(context) {
         }
 
         return await getEmptyImageResponse(context);
-
     } catch (error) {
         return await getEmptyImageResponse(context);
     }
