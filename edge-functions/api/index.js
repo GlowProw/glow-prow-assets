@@ -16,7 +16,7 @@ const RESOURCE_CONFIG = {
         treasureMaps: ['/treasureMaps'],
         ultimates: ['/ultimates']
     },
-    extensions: ['.webp', '.png'],
+    extensions: ['.webp'],
 };
 
 /**
