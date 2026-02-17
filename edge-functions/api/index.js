@@ -1,4 +1,3 @@
-const DEBUG = false
 const ORIGIN_URL = 'https://assets.glow-prow.org.cn'
 const RESOURCE_CONFIG = {
     basePaths: {
@@ -55,7 +54,8 @@ async function getEmptyImageResponse(context) {
             status: 200,
             headers: {
                 'Content-Type': response.headers.get('content-type') || 'image/png',
-                'Cache-Control': `public, max-age=${30 * 60000}`
+                'Cache-Control': `public, max-age=${30 * 60000}`,
+                'Access-Control-Allow-Origin': '*',
             }
         });
     }
@@ -69,6 +69,7 @@ export default async function onRequestGet(context) {
 
     const category = url.searchParams.get('src');
     const id = url.searchParams.get('id');
+    const debug = url.searchParams.get('debug');
 
     if (!category || !id) {
         return new Response('Missing src or id parameter', {status: 400});
@@ -93,10 +94,13 @@ export default async function onRequestGet(context) {
 
         for (const pattern of patterns) {
             try {
-                const imageUrl = new URL(pattern, DEBUG ? ORIGIN_URL : url.origin);
+                const imageUrl = new URL(pattern, ORIGIN_URL || url.origin);
                 const response = await fetch(imageUrl);
 
                 if (response.ok) {
+                    if (debug)
+                        console.log(response)
+
                     const contentType = response.headers.get('content-type');
                     const imageData = await response.arrayBuffer();
 
@@ -104,11 +108,13 @@ export default async function onRequestGet(context) {
                         status: 200,
                         headers: {
                             'Content-Type': contentType,
-                            'Cache-Control': 'public, max-age=86400'
+                            'Cache-Control': 'public, max-age=86400',
+                            'Access-Control-Allow-Origin': '*',
                         }
                     });
                 }
             } catch (e) {
+                console.error(e)
                 continue;
             }
         }
