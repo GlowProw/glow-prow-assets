@@ -1,6 +1,20 @@
 const RESOURCE_CONFIG = {
     basePaths: {
-        items: ['/items', '/items/ammunitions', '/items/armors', '/items/chests', '/items/consumables', '/items/majorFurnitures', '/items/offensiveFurnitures', '/items/tools', '/items/utilityFurnitures', '/items/weapons'],
+        items: [
+            '/items',
+            '/items/ammunitions',
+            '/items/armors',
+            '/items/chests',
+            '/items/consumables',
+            '/items/majorFurnitures',
+            '/items/offensiveFurnitures',
+            '/items/tools',
+            '/items/utilityFurnitures',
+            '/items/shipUpgrades',
+            '/items/weapons',
+            '/items/weapons/longGuns',
+            '/items/weapons/torpedos'
+        ],
         commodities: ['/commodities'],
         cosmetics: ['/cosmetics'],
         damages: ['/damages'],
@@ -22,11 +36,10 @@ function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
     for (const basePath of basePaths) {
         for (const ext of config.extensions) {
             patterns.push(`${basePath}/${id}${ext}`);
-            patterns.push(`/${id}${ext}`);
         }
     }
 
-    return patterns;
+    return [...new Set(patterns)];
 }
 
 async function getEmptyImageResponse(context) {
@@ -76,50 +89,7 @@ export default async function onRequestGet(context) {
 
         const patterns = generatePathPatterns(decodedCategory, decodedId);
 
-        console.log(`Looking for: ${decodedCategory}/${decodedId}`);
-        console.log('Patterns:', patterns);
-
-        const fetchPromises = patterns.map(async (pattern) => {
-            try {
-                const imageUrl = new URL(pattern, url.origin);
-                const response = await fetch(imageUrl);
-
-                if (response.ok) {
-                    return {
-                        success: true,
-                        response: response,
-                        path: pattern
-                    };
-                }
-            } catch (e) {
-            }
-            return {success: false};
-        });
-
-        const results = await Promise.all(fetchPromises);
-        const successful = results.find(result => result.success);
-
-        if (successful) {
-            const contentType = successful.response.headers.get('content-type');
-            const imageData = await successful.response.arrayBuffer();
-
-            console.log(`Successfully found at: ${successful.path}`);
-
-            return new Response(imageData, {
-                status: 200,
-                headers: {
-                    'Content-Type': contentType,
-                    'Cache-Control': 'public, max-age=86400'
-                }
-            });
-        }
-
-        const extraPatterns = [];
-        for (const ext of RESOURCE_CONFIG.extensions) {
-            extraPatterns.push(`/${decodedId}${ext}`);
-        }
-
-        for (const pattern of extraPatterns) {
+        for (const pattern of patterns) {
             try {
                 const imageUrl = new URL(pattern, url.origin);
                 const response = await fetch(imageUrl);
@@ -141,11 +111,9 @@ export default async function onRequestGet(context) {
             }
         }
 
-        console.log(`Image not found for ${decodedCategory}/${decodedId}, returning /empty.png`);
         return await getEmptyImageResponse(context);
 
     } catch (error) {
-        console.error('Error:', error);
         return await getEmptyImageResponse(context);
     }
 }
