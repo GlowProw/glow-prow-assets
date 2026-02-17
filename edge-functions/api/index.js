@@ -1,4 +1,4 @@
-const DEBUG = true
+const DEBUG = false
 const ORIGIN_URL = 'https://assets.glow-prow.org.cn'
 const RESOURCE_CONFIG = {
     basePaths: {
