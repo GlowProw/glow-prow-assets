@@ -121,6 +121,7 @@ export default async function onRequestGet(context) {
 
         return await getEmptyImageResponse(context);
     } catch (error) {
+        console.error(error)
         return await getEmptyImageResponse(context);
     }
 }
