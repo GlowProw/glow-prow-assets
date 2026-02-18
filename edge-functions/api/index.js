@@ -28,6 +28,7 @@ const RESOURCE_CONFIG = {
         ultimates: ['/ultimates']
     },
     extensions: ['.webp'],
+    emptyImagePath: '/empty.webp' // 将空图片路径添加到配置中
 };
 
 function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
@@ -44,23 +45,51 @@ function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
 }
 
 async function getEmptyImageResponse(context) {
-    const url = new URL(ORIGIN_URL);
-    const emptyImageUrl = new URL('/empty.webp', url);
-    const response = await fetch(emptyImageUrl);
+    try {
+        // 正确构建空图片 URL
+        const emptyImageUrl = `${ORIGIN_URL}${RESOURCE_CONFIG.emptyImagePath}`;
 
-    if (response.ok) {
-        const imageData = await response.arrayBuffer();
-        return new Response(imageData, {
-            status: 200,
-            headers: {
-                'Content-Type': response.headers.get('content-type') || 'image/png',
-                'Cache-Control': `public, max-age=${30 * 60000}`,
-                'Access-Control-Allow-Origin': '*',
-            }
-        });
+        console.log('正在获取空图片:', emptyImageUrl);
+
+        const response = await fetch(emptyImageUrl);
+
+        if (response.ok) {
+            const imageData = await response.arrayBuffer();
+            return new Response(imageData, {
+                status: 200,
+                headers: {
+                    'Content-Type': response.headers.get('content-type') || 'image/webp',
+                    'Cache-Control': 'public, max-age=3600', // 缓存1小时
+                    'Access-Control-Allow-Origin': '*',
+                }
+            });
+        }
+
+        // 如果空图片不存在，创建一个 1x1 透明像素作为后备
+        console.error('空图片未找到:', emptyImageUrl);
+        return createTransparentPixelResponse();
+
+    } catch (error) {
+        console.error('获取空图片时出错:', error);
+        // 终极后备方案 - 创建一个透明像素
+        return createTransparentPixelResponse();
     }
+}
 
-    return new Response('Empty image not found', {status: 404});
+// 创建一个 1x1 的透明 PNG 像素作为终极后备
+function createTransparentPixelResponse() {
+    // Base64 编码的 1x1 透明 PNG
+    const transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    const imageData = Uint8Array.from(atob(transparentPixel), c => c.charCodeAt(0));
+
+    return new Response(imageData, {
+        status: 200,
+        headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=3600', // 缓存1小时
+            'Access-Control-Allow-Origin': '*',
+        }
+    });
 }
 
 export default async function onRequestGet(context) {
@@ -72,13 +101,13 @@ export default async function onRequestGet(context) {
     const debug = url.searchParams.get('debug');
 
     if (!category || !id) {
-        return new Response('Missing src or id parameter', {status: 400});
+        return new Response('缺少 src 或 id 参数', {status: 400});
     }
 
     if (!RESOURCE_CONFIG.basePaths[category]) {
         return new Response(JSON.stringify({
-            error: 'Invalid category',
-            message: `Category "${category}" is not configured`,
+            error: '无效的分类',
+            message: `分类 "${category}" 未配置`,
             availableCategories: Object.keys(RESOURCE_CONFIG.basePaths)
         }), {
             status: 400,
@@ -98,8 +127,9 @@ export default async function onRequestGet(context) {
                 const response = await fetch(imageUrl);
 
                 if (response.ok) {
-                    if (debug)
-                        console.log(response)
+                    if (debug) {
+                        console.log('找到图片:', imageUrl.toString());
+                    }
 
                     const contentType = response.headers.get('content-type');
                     const imageData = await response.arrayBuffer();
@@ -108,20 +138,21 @@ export default async function onRequestGet(context) {
                         status: 200,
                         headers: {
                             'Content-Type': contentType,
-                            'Cache-Control': 'public, max-age=86400',
+                            'Cache-Control': 'public, max-age=86400', // 缓存24小时
                             'Access-Control-Allow-Origin': '*',
                         }
                     });
                 }
             } catch (e) {
-                console.error(e)
+                console.error('获取图片时出错:', e);
                 continue;
             }
         }
 
+        // 所有路径都失败，返回空图片
         return await getEmptyImageResponse(context);
     } catch (error) {
-        console.error(error)
+        console.error('处理请求时出错:', error);
         return await getEmptyImageResponse(context);
     }
 }
