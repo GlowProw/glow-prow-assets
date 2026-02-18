@@ -23,7 +23,7 @@ const RESOURCE_CONFIG = {
         materials: ['/materials'],
         modifications: ['/modifications'],
         npcs: ['/npcs'],
-        ships: ['/ships'],
+        ships: ['/ships', '/items/shipUpgrades',],
         treasureMaps: ['/treasureMaps'],
         ultimates: ['/ultimates']
     },
@@ -46,11 +46,7 @@ function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
 
 async function getEmptyImageResponse(context) {
     try {
-        // 正确构建空图片 URL
         const emptyImageUrl = `${ORIGIN_URL}${RESOURCE_CONFIG.emptyImagePath}`;
-
-        console.log('正在获取空图片:', emptyImageUrl);
-
         const response = await fetch(emptyImageUrl);
 
         if (response.ok) {
@@ -65,18 +61,15 @@ async function getEmptyImageResponse(context) {
             });
         }
 
-        // 如果空图片不存在，创建一个 1x1 透明像素作为后备
         console.error('空图片未找到:', emptyImageUrl);
         return createTransparentPixelResponse();
 
     } catch (error) {
         console.error('获取空图片时出错:', error);
-        // 终极后备方案 - 创建一个透明像素
         return createTransparentPixelResponse();
     }
 }
 
-// 创建一个 1x1 的透明 PNG 像素作为终极后备
 function createTransparentPixelResponse() {
     // Base64 编码的 1x1 透明 PNG
     const transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
@@ -92,7 +85,7 @@ function createTransparentPixelResponse() {
     });
 }
 
-export default async function onRequestGet(context) {
+export async function onRequestGet(context) {
     const {request} = context;
     const url = new URL(request.url);
 
