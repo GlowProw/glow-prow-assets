@@ -24,7 +24,8 @@ const RESOURCE_CONFIG = {
             '/items/shipUpgrades',
             '/items/weapons',
             '/items/weapons/longGuns',
-            '/items/weapons/torpedos'
+            '/items/weapons/torpedos',
+            '/ships/shipUpgrades'
         ],
         commodities: ['/commodities'],
         cosmetics: ['/cosmetics'],
@@ -33,7 +34,7 @@ const RESOURCE_CONFIG = {
         materials: ['/materials'],
         modifications: ['/modifications'],
         npcs: ['/npcs'],
-        ships: ['/ships', '/items/shipUpgrades'],
+        ships: ['/ships', '/ships/shipUpgrades'],
         treasureMaps: [
             '/treasureMaps/legendary',
             '/treasureMaps/old',
