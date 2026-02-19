@@ -73,7 +73,8 @@ const rateLimitCache = new Map();
 
 function isDebug(context) {
     const {env} = context;
-    return env.NODE_ENV == 'development';
+    console.log('env:', env.NODE_ENV)
+    return (env.NODE_ENV || 'production') === 'development';
 }
 
 function getOriginURL(context) {
