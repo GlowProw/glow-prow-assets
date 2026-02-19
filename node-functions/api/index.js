@@ -21,11 +21,10 @@ const RESOURCE_CONFIG = {
             '/items/offensiveFurnitures',
             '/items/tools',
             '/items/utilityFurnitures',
-            '/items/shipUpgrades',
+            '/ships/shipUpgrades',
             '/items/weapons',
             '/items/weapons/longGuns',
             '/items/weapons/torpedos',
-            '/ships/shipUpgrades'
         ],
         commodities: ['/commodities'],
         cosmetics: ['/cosmetics'],
@@ -74,7 +73,7 @@ const rateLimitCache = new Map();
 
 function isDebug(context) {
     const {env} = context;
-    return env.NODE_ENV === 'development';
+    return env.NODE_ENV == 'development';
 }
 
 function getOriginURL(context) {
