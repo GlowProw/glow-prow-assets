@@ -73,7 +73,6 @@ const rateLimitCache = new Map();
 
 function isDebug(context) {
     const {env} = context;
-    console.log('env:', env.NODE_ENV)
     return (env.NODE_ENV || 'production') === 'development';
 }
 
