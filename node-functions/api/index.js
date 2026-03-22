@@ -40,7 +40,9 @@ const RESOURCE_CONFIG = {
             '/treasureMaps/recent',
             '/treasureMaps/veryOld',
         ],
-        ultimates: ['/ultimates']
+        ultimates: ['/ultimates'],
+        vanities: ['/vanities/cosmetics'],
+        sets: ['/vanities/sets']
     },
     extensions: ['.webp', '.png'],
     emptyImagePath: '/empty.webp'
