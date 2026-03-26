@@ -10,4 +10,4 @@
 glow-prow提供几种可访问方案:
 
 - 使用github raw,`raw.github.com/items/abyssal1.png`
-- 使用基于eo函数获取, `assets.glow-prow.org.cn/api?src=items&id=abyssal1`
+- 使用基于eo函数获取, `assets.glow-prow.org.cn/api?t=items&id=abyssal1`

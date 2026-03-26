@@ -27,7 +27,6 @@ const RESOURCE_CONFIG = {
             '/items/weapons/torpedos',
         ],
         commodities: ['/commodities'],
-        cosmetics: ['/cosmetics'],
         damages: ['/damages'],
         factions: ['/factions'],
         materials: ['/materials'],
@@ -309,21 +308,21 @@ export async function onRequestGet(context) {
         return await getEmptyImageResponse(context);
     }
 
-    const category = url.searchParams.get('src');
+    const t = url.searchParams.get('t');
     const id = url.searchParams.get('id');
     const debug = url.searchParams.get('debug');
 
-    if (!category || !id) {
-        return new Response('缺少 src 或 id 参数', {
+    if (!t || !id) {
+        return new Response('缺少 t 或 id 参数', {
             status: 400,
             headers: getSecurityHeaders(request, env)
         });
     }
 
-    if (!RESOURCE_CONFIG.basePaths[category]) {
+    if (!RESOURCE_CONFIG.basePaths[t]) {
         return new Response(JSON.stringify({
             error: '无效的分类',
-            message: `分类 "${category}" 未配置`,
+            message: `分类 "${t}" 未配置`,
             availableCategories: Object.keys(RESOURCE_CONFIG.basePaths)
         }), {
             status: 400,
@@ -335,7 +334,7 @@ export async function onRequestGet(context) {
     }
 
     try {
-        const decodedCategory = decodeURIComponent(category);
+        const decodedCategory = decodeURIComponent(t);
         const decodedId = decodeURIComponent(id);
 
         const patterns = generatePathPatterns(decodedCategory, decodedId);
