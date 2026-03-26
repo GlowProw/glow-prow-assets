@@ -208,7 +208,7 @@ function cleanupRateLimitCache() {
 function getSecurityHeaders(request, env) {
     const allowedDomains = ANTI_LEECH_CONFIG.getAllowedDomains(env);
     const origin = request.headers.get('Origin');
-    
+
     // 默认使用第一个域名，或在调试模式下使用 *
     let allowOrigin = allowedDomains[0] || '';
 
@@ -216,7 +216,7 @@ function getSecurityHeaders(request, env) {
         try {
             const originUrl = new URL(origin);
             const originHost = originUrl.hostname;
-            
+
             // 检查 Origin 是否在允许列表中
             const isAllowed = allowedDomains.some(domain => {
                 if (domain.startsWith('.')) {
@@ -225,7 +225,7 @@ function getSecurityHeaders(request, env) {
                 }
                 return originHost === domain;
             });
-            
+
             if (isAllowed) {
                 allowOrigin = origin;
             }
@@ -237,7 +237,7 @@ function getSecurityHeaders(request, env) {
     }
 
     return {
-        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Referer',
         'Access-Control-Max-Age': '86400',
