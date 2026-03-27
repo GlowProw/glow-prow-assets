@@ -64,8 +64,8 @@ const ANTI_LEECH_CONFIG = {
     rateLimit: {
         enabled: true,
         windowMs: 60 * 1000, // 1分钟窗口
-        maxRequests: 100, // 每个IP每分钟最多100次请求
-        cacheSize: 1000 // 最多缓存1000个IP的计数
+        maxRequests: 2000, // 每个IP每分钟最多500次请求
+        cacheSize: 50000 // 最多缓存10000个IP的计数
     }
 };
 
