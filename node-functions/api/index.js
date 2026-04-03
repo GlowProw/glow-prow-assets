@@ -47,7 +47,7 @@ const RESOURCE_CONFIG = {
     emptyImagePath: '/empty.webp'
 };
 
-// 速率配置
+// 防盗链配置
 const ANTI_LEECH_CONFIG = {
     // 允许的域名列表（从环境变量读取）
     getAllowedDomains: (env) => {
@@ -60,17 +60,7 @@ const ANTI_LEECH_CONFIG = {
     cacheTime: 21600,               // 24小时
     // 空图片缓存时间（秒）
     emptyImageCacheTime: 3600,      // 1小时
-    // 速率限制配置
-    rateLimit: {
-        enabled: true,
-        windowMs: 60 * 1000,        // 窗口期
-        maxRequests: 30000,          // 每个IP每分钟最多请求数
-        cacheSize: 100000            // 最多缓存记录数
-    }
 };
-
-// 简单的内存缓存用于速率限制
-const rateLimitCache = new Map();
 
 function isDebug(env) {
     return (env.NODE_ENV || 'production') === 'development';
@@ -138,69 +128,6 @@ function isRefererAllowed(request, env) {
     } catch (e) {
         console.error('解析 Referer 失败:', e);
         return false;
-    }
-}
-
-/**
- * 速率限制检查 - 使用 IP + UUID 组合键
- * @param {string} clientIp - 客户端IP
- */
-function checkRateLimit(clientIp) {
-    if (!ANTI_LEECH_CONFIG.rateLimit.enabled) {
-        return {allowed: true};
-    }
-
-    // 使用 IP 组合作为速率限制的唯一键
-    const rateLimitKey = `${clientIp}`;
-    const now = Date.now();
-    const windowMs = ANTI_LEECH_CONFIG.rateLimit.windowMs;
-    const maxRequests = ANTI_LEECH_CONFIG.rateLimit.maxRequests;
-
-    // 获取该键的请求记录
-    let record = rateLimitCache.get(rateLimitKey);
-
-    // 如果没有记录或记录已过期，创建新记录
-    if (!record || now - record.windowStart > windowMs) {
-        record = {
-            windowStart: now,
-            count: 1
-        };
-        rateLimitCache.set(rateLimitKey, record);
-        return {allowed: true};
-    }
-
-    // 检查是否超过限制
-    if (record.count >= maxRequests) {
-        return {
-            allowed: false,
-            retryAfter: Math.ceil((record.windowStart + windowMs - now) / 1000)
-        };
-    }
-
-    // 增加计数
-    record.count++;
-    return {allowed: true};
-}
-
-/**
- * 清理过期的速率限制记录
- */
-function cleanupRateLimitCache() {
-    const now = Date.now();
-    const windowMs = ANTI_LEECH_CONFIG.rateLimit.windowMs;
-
-    for (const [key, record] of rateLimitCache.entries()) {
-        if (now - record.windowStart > windowMs) {
-            rateLimitCache.delete(key);
-        }
-    }
-
-    // 如果缓存太大，删除最旧的记录
-    if (rateLimitCache.size > ANTI_LEECH_CONFIG.rateLimit.cacheSize) {
-        const entries = Array.from(rateLimitCache.entries());
-        entries.sort((a, b) => a[1].windowStart - b[1].windowStart);
-        const toDelete = entries.slice(0, entries.length - ANTI_LEECH_CONFIG.rateLimit.cacheSize);
-        toDelete.forEach(([key]) => rateLimitCache.delete(key));
     }
 }
 
@@ -305,9 +232,6 @@ function createTransparentPixelResponse(request, env) {
  * 主请求处理函数
  */
 export async function onRequestGet({request, env}) {
-    // 定期清理速率限制缓存
-    cleanupRateLimitCache();
-
     // 处理 OPTIONS 请求（CORS 预检）
     if (request.method === 'OPTIONS') {
         const securityHeaders = getSecurityHeaders(request, env);
@@ -315,50 +239,6 @@ export async function onRequestGet({request, env}) {
             status: 204,
             headers: securityHeaders
         });
-    }
-
-    // 环境获取客户端信息
-    const eo = request.eo;
-    const clientIp = eo?.clientIp;
-
-    // 调试日志
-    if (isDebug(env)) {
-        console.log('EdgeOne 环境信息:', {
-            clientIp,
-            geo: eo?.geo
-        });
-    }
-
-    // 如果没有获取到客户端IP（非EdgeOne环境降级处理）
-    if (!clientIp) {
-        console.warn('无法获取 clientIp，可能不在 EdgeOne 环境中运行');
-        // 降级：尝试从请求头获取
-        const fallbackIp = request.headers.get('x-forwarded-for')?.split(',')[0] ||
-            request.headers.get('x-real-ip') ||
-            'unknown';
-
-        const rateLimitResult = checkRateLimit(fallbackIp);
-        if (!rateLimitResult.allowed) {
-            return new Response('请求过于频繁，请稍后再试', {
-                status: 429,
-                headers: {
-                    'Retry-After': rateLimitResult.retryAfter.toString(),
-                    ...getSecurityHeaders(request, env)
-                }
-            });
-        }
-    } else {
-        // 速率限制检查（使用 IP + UUID 组合键）
-        const rateLimitResult = checkRateLimit(clientIp);
-        if (!rateLimitResult.allowed) {
-            return new Response('请求过于频繁，请稍后再试', {
-                status: 429,
-                headers: {
-                    'Retry-After': rateLimitResult.retryAfter.toString(),
-                    ...getSecurityHeaders(request, env)
-                }
-            });
-        }
     }
 
     // 防盗链检查
