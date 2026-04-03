@@ -64,8 +64,8 @@ const ANTI_LEECH_CONFIG = {
     rateLimit: {
         enabled: true,
         windowMs: 60 * 1000,        // 窗口期
-        maxRequests: 30000,          // 每个IP每分钟最多请求数
-        cacheSize: 100000            // 最多缓存记录数
+        maxRequests: 100000,          // 每个IP每分钟最多请求数
+        cacheSize: 50000            // 最多缓存记录数
     }
 };
 
@@ -213,38 +213,8 @@ function cleanupRateLimitCache() {
  * 生成安全响应头
  */
 function getSecurityHeaders(request, env) {
-    const allowedDomains = ANTI_LEECH_CONFIG.getAllowedDomains(env);
-    const origin = request.headers.get('Origin');
-
-    // 默认使用第一个域名，或在调试模式下使用 *
-    let allowOrigin = allowedDomains[0] || '';
-
-    if (origin) {
-        try {
-            const originUrl = new URL(origin);
-            const originHost = originUrl.hostname;
-
-            // 检查 Origin 是否在允许列表中
-            const isAllowed = allowedDomains.some(domain => {
-                if (domain.startsWith('.')) {
-                    // 支持子域名匹配
-                    return originHost.endsWith(domain) || originHost === domain.substring(1);
-                }
-                return originHost === domain;
-            });
-
-            if (isAllowed) {
-                allowOrigin = origin;
-            }
-        } catch (e) {
-            // 解析 Origin 失败，保持默认
-        }
-    } else if (isDebug(env)) {
-        allowOrigin = '*';
-    }
-
     return {
-        'Access-Control-Allow-Origin': allowOrigin,
+        'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Referer',
         'Access-Control-Max-Age': '86400',
