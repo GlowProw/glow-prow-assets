@@ -2,6 +2,7 @@
  * 中间件
  * 转发边缘静态资源
  * by cabbagelol
+ * 适配腾讯云 EdgeOne Pages 环境
  */
 
 // 基本配置
@@ -64,21 +65,20 @@ const ANTI_LEECH_CONFIG = {
     rateLimit: {
         enabled: true,
         windowMs: 60 * 1000, // 1分钟窗口
-        maxRequests: 2000, // 每个IP每分钟最多500次请求
-        cacheSize: 50000 // 最多缓存10000个IP的计数
+        maxRequests: 500, // 每个IP每分钟最多500次请求
+        cacheSize: 50000 // 最多缓存50000个记录
     }
 };
 
 // 简单的内存缓存用于速率限制
 const rateLimitCache = new Map();
 
-function isDebug(context) {
-    const {env} = context;
+function isDebug(env) {
     return (env.NODE_ENV || 'production') === 'development';
 }
 
-function getOriginURL(context) {
-    if (isDebug(context)) return TEST_URL;
+function getOriginURL(env) {
+    if (isDebug(env)) return TEST_URL;
     return ORIGIN_URL;
 }
 
@@ -103,7 +103,7 @@ function isRefererAllowed(request, env) {
     const allowedDomains = ANTI_LEECH_CONFIG.getAllowedDomains(env);
 
     // 调试模式跳过检查
-    if (isDebug({env})) {
+    if (isDebug(env)) {
         return true;
     }
 
@@ -143,19 +143,22 @@ function isRefererAllowed(request, env) {
 }
 
 /**
- * 速率限制检查
+ * 速率限制检查 - 使用 IP + UUID 组合键
+ * @param {string} clientIp - 客户端IP
  */
 function checkRateLimit(clientIp) {
     if (!ANTI_LEECH_CONFIG.rateLimit.enabled) {
         return {allowed: true};
     }
 
+    // 使用 IP 组合作为速率限制的唯一键
+    const rateLimitKey = `${clientIp}`;
     const now = Date.now();
     const windowMs = ANTI_LEECH_CONFIG.rateLimit.windowMs;
     const maxRequests = ANTI_LEECH_CONFIG.rateLimit.maxRequests;
 
-    // 获取该IP的请求记录
-    let record = rateLimitCache.get(clientIp);
+    // 获取该键的请求记录
+    let record = rateLimitCache.get(rateLimitKey);
 
     // 如果没有记录或记录已过期，创建新记录
     if (!record || now - record.windowStart > windowMs) {
@@ -163,7 +166,7 @@ function checkRateLimit(clientIp) {
             windowStart: now,
             count: 1
         };
-        rateLimitCache.set(clientIp, record);
+        rateLimitCache.set(rateLimitKey, record);
         return {allowed: true};
     }
 
@@ -187,9 +190,9 @@ function cleanupRateLimitCache() {
     const now = Date.now();
     const windowMs = ANTI_LEECH_CONFIG.rateLimit.windowMs;
 
-    for (const [ip, record] of rateLimitCache.entries()) {
+    for (const [key, record] of rateLimitCache.entries()) {
         if (now - record.windowStart > windowMs) {
-            rateLimitCache.delete(ip);
+            rateLimitCache.delete(key);
         }
     }
 
@@ -198,12 +201,12 @@ function cleanupRateLimitCache() {
         const entries = Array.from(rateLimitCache.entries());
         entries.sort((a, b) => a[1].windowStart - b[1].windowStart);
         const toDelete = entries.slice(0, entries.length - ANTI_LEECH_CONFIG.rateLimit.cacheSize);
-        toDelete.forEach(([ip]) => rateLimitCache.delete(ip));
+        toDelete.forEach(([key]) => rateLimitCache.delete(key));
     }
 }
 
 /**
- * 生成防盗链响应头
+ * 生成安全响应头
  */
 function getSecurityHeaders(request, env) {
     const allowedDomains = ANTI_LEECH_CONFIG.getAllowedDomains(env);
@@ -232,12 +235,12 @@ function getSecurityHeaders(request, env) {
         } catch (e) {
             // 解析 Origin 失败，保持默认
         }
-    } else if (isDebug({env})) {
+    } else if (isDebug(env)) {
         allowOrigin = '*';
     }
 
     return {
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': allowOrigin,
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
         'Access-Control-Allow-Headers': 'Content-Type, Referer',
         'Access-Control-Max-Age': '86400',
@@ -249,10 +252,12 @@ function getSecurityHeaders(request, env) {
     };
 }
 
-async function getEmptyImageResponse(context) {
+/**
+ * 获取空图片响应
+ */
+async function getEmptyImageResponse(request, env) {
     try {
-        const {request, env} = context;
-        const emptyImageUrl = `${getOriginURL(context)}${RESOURCE_CONFIG.emptyImagePath}`;
+        const emptyImageUrl = `${getOriginURL(env)}${RESOURCE_CONFIG.emptyImagePath}`;
         const response = await fetch(emptyImageUrl);
 
         if (response.ok) {
@@ -270,19 +275,22 @@ async function getEmptyImageResponse(context) {
         }
 
         console.error('空图片未找到:', emptyImageUrl);
-        return createTransparentPixelResponse(context);
+        return createTransparentPixelResponse(request, env);
 
     } catch (error) {
         console.error('获取空图片时出错:', error);
-        return createTransparentPixelResponse(context);
+        return createTransparentPixelResponse(request, env);
     }
 }
 
-function createTransparentPixelResponse(context) {
+/**
+ * 创建透明像素响应
+ */
+function createTransparentPixelResponse(request, env) {
     // Base64 编码的 1x1 透明 PNG
     const transparentPixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
     const imageData = Uint8Array.from(atob(transparentPixel), c => c.charCodeAt(0));
-    const securityHeaders = getSecurityHeaders(context.request, context.env);
+    const securityHeaders = getSecurityHeaders(request, env);
 
     return new Response(imageData, {
         status: 200,
@@ -294,10 +302,10 @@ function createTransparentPixelResponse(context) {
     });
 }
 
-export async function onRequestGet(context) {
-    const {request, env, clientIp, geo} = context;
-    const url = new URL(request.url);
-
+/**
+ * 主请求处理函数
+ */
+export async function onRequestGet({request, env}) {
     // 定期清理速率限制缓存
     cleanupRateLimitCache();
 
@@ -310,8 +318,38 @@ export async function onRequestGet(context) {
         });
     }
 
-    // 速率限制检查
-    if (clientIp) {
+    // 环境获取客户端信息
+    const eo = request.eo;
+    const clientIp = eo?.clientIp;
+
+    // 调试日志
+    if (isDebug(env)) {
+        console.log('EdgeOne 环境信息:', {
+            clientIp,
+            geo: eo?.geo
+        });
+    }
+
+    // 如果没有获取到客户端IP（非EdgeOne环境降级处理）
+    if (!clientIp) {
+        console.warn('无法获取 clientIp，可能不在 EdgeOne 环境中运行');
+        // 降级：尝试从请求头获取
+        const fallbackIp = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+            request.headers.get('x-real-ip') ||
+            'unknown';
+
+        const rateLimitResult = checkRateLimit(fallbackIp);
+        if (!rateLimitResult.allowed) {
+            return new Response('请求过于频繁，请稍后再试', {
+                status: 429,
+                headers: {
+                    'Retry-After': rateLimitResult.retryAfter.toString(),
+                    ...getSecurityHeaders(request, env)
+                }
+            });
+        }
+    } else {
+        // 速率限制检查（使用 IP + UUID 组合键）
         const rateLimitResult = checkRateLimit(clientIp);
         if (!rateLimitResult.allowed) {
             return new Response('请求过于频繁，请稍后再试', {
@@ -326,6 +364,7 @@ export async function onRequestGet(context) {
 
     // 防盗链检查
     if (!isRefererAllowed(request, env)) {
+        const url = new URL(request.url);
         // 返回一个 1x1 透明像素或直接返回 403
         if (url.searchParams.get('strict') === 'true') {
             return new Response('禁止访问', {
@@ -334,9 +373,10 @@ export async function onRequestGet(context) {
             });
         }
         // 返回空图片（不会暴露真实资源）
-        return await getEmptyImageResponse(context);
+        return await getEmptyImageResponse(request, env);
     }
 
+    const url = new URL(request.url);
     const t = url.searchParams.get('t');
     const id = url.searchParams.get('id');
     const debug = url.searchParams.get('debug');
@@ -370,7 +410,7 @@ export async function onRequestGet(context) {
 
         for (const pattern of patterns) {
             try {
-                const imageUrl = new URL(pattern, getOriginURL(context));
+                const imageUrl = new URL(pattern, getOriginURL(env));
                 const response = await fetch(imageUrl);
 
                 if (response.ok) {
@@ -398,9 +438,9 @@ export async function onRequestGet(context) {
         }
 
         // 所有路径都失败，返回空图片
-        return await getEmptyImageResponse(context);
+        return await getEmptyImageResponse(request, env);
     } catch (error) {
         console.error('处理请求时出错:', error);
-        return await getEmptyImageResponse(context);
+        return await getEmptyImageResponse(request, env);
     }
 }
