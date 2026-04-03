@@ -4,7 +4,7 @@
  * by cabbagelol
  */
 
-// 基本配置
+// 基本默认配置
 const ORIGIN_URL = 'https://assets.glow-prow.org.cn'
 const TEST_URL = 'http://localhost:8088'
 
@@ -55,7 +55,7 @@ const ANTI_LEECH_CONFIG = {
         return domains.split(',').map(d => d.trim());
     },
     // 允许空 Referer（直接访问）
-    allowEmptyReferer: false,
+    allowEmptyReferer: true,
     // 缓存时间（秒）
     cacheTime: 21600,               // 24小时
     // 空图片缓存时间（秒）
@@ -77,8 +77,8 @@ function isDebug(env) {
 }
 
 function getOriginURL(env) {
-    if (isDebug(env)) return TEST_URL;
-    return ORIGIN_URL;
+    if (isDebug(env)) return env.TARGET_TEST_DOMAIN || TEST_URL;
+    return env.TARGET_DOMAIN || ORIGIN_URL;
 }
 
 function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
