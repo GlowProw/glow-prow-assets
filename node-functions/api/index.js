@@ -5,7 +5,7 @@
  */
 
 // 基本默认配置
-const ORIGIN_URL = 'https://assets.glow-prow.org.cn'
+const ORIGIN_URL = 'https://assets.glow-prow.top'
 const TEST_URL = 'http://localhost:8088'
 
 // 路径配置
@@ -55,7 +55,7 @@ const ANTI_LEECH_CONFIG = {
         return domains.split(',').map(d => d.trim());
     },
     // 允许空 Referer（直接访问）
-    allowEmptyReferer: true,
+    allowEmptyReferer: false,
     // 缓存时间（秒）
     cacheTime: 21600,               // 24小时
     // 空图片缓存时间（秒）
@@ -64,8 +64,8 @@ const ANTI_LEECH_CONFIG = {
     rateLimit: {
         enabled: true,
         windowMs: 60 * 1000,        // 窗口期
-        maxRequests: 8000,          // 每个IP每分钟最多请求数
-        cacheSize: 10000            // 最多缓存记录数
+        maxRequests: 30000,          // 每个IP每分钟最多请求数
+        cacheSize: 100000            // 最多缓存记录数
     }
 };
 
