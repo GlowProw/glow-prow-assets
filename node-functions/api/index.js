@@ -2,7 +2,6 @@
  * 中间件
  * 转发边缘静态资源
  * by cabbagelol
- * 适配腾讯云 EdgeOne Pages 环境
  */
 
 // 基本配置
@@ -58,15 +57,15 @@ const ANTI_LEECH_CONFIG = {
     // 允许空 Referer（直接访问）
     allowEmptyReferer: false,
     // 缓存时间（秒）
-    cacheTime: 86400, // 24小时
+    cacheTime: 21600,               // 24小时
     // 空图片缓存时间（秒）
-    emptyImageCacheTime: 3600, // 1小时
+    emptyImageCacheTime: 3600,      // 1小时
     // 速率限制配置
     rateLimit: {
         enabled: true,
-        windowMs: 60 * 1000, // 1分钟窗口
-        maxRequests: 500, // 每个IP每分钟最多500次请求
-        cacheSize: 50000 // 最多缓存50000个记录
+        windowMs: 60 * 1000,        // 窗口期
+        maxRequests: 8000,          // 每个IP每分钟最多请求数
+        cacheSize: 10000            // 最多缓存记录数
     }
 };
 
