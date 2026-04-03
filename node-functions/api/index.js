@@ -101,10 +101,10 @@ function isRefererAllowed(request, env) {
         return true;
     }
 
-    // 如果没有 Referer 且不允许空 Referer，拒绝访问
+    // 如果没有 Referer, 也允许，但打印日志
     if (!referer) {
-        console.log('防盗链: 拒绝空 Referer 的请求');
-        return false;
+        console.log(`防盗链: ${{request, env}}`);
+        return true;
     }
 
     try {
