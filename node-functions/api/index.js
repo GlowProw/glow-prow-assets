@@ -97,8 +97,9 @@ function generatePathPatterns(category, id, config = RESOURCE_CONFIG) {
 /**
  * 检查 Referer 是否允许访问
  */
-function isRefererAllowed(request, env) {
+function isRefererAllowed(request, env, clientIp) {
     const referer = request.headers.get('Referer');
+    const ip = clientIp || request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip')
     const allowedDomains = ANTI_LEECH_CONFIG.getAllowedDomains(env);
 
     // 调试模式跳过检查
@@ -111,10 +112,14 @@ function isRefererAllowed(request, env) {
         return true;
     }
 
-    // 如果没有 Referer 且不允许空 Referer，拒绝访问
+    // 没有 Referer
     if (!referer) {
-        console.log('防盗链: 拒绝空 Referer 的请求');
-        return false;
+        console.log(`空 Referer 的请求, ${JSON.stringify({
+            request,
+            env,
+            clientIp: ip
+        })}`);
+        return true;
     }
 
     try {
@@ -304,7 +309,7 @@ function createTransparentPixelResponse(request, env) {
 /**
  * 主请求处理函数
  */
-export async function onRequestGet({request, env, clientIp: envClientIp}) {
+export async function onRequestGet({request, env, geo, clientIp}) {
     // 定期清理速率限制缓存
     cleanupRateLimitCache();
 
@@ -318,19 +323,20 @@ export async function onRequestGet({request, env, clientIp: envClientIp}) {
     }
 
     // 环境获取客户端信息
-    const eo = request.eo;
-    const clientIp = eo?.clientIp || envClientIp;
+    const ip = clientIp || request.headers.get('x-forwarded-for') || request.headers.get('cf-connecting-ip')
 
     // 调试日志
     if (isDebug(env)) {
         console.log('EdgeOne 环境信息:', JSON.stringify({
-            clientIp,
-            geo: eo?.geo
+            request,
+            env,
+            clientIp: ip,
+            geo
         }));
     }
 
-    // 如果没有获取到客户端IP（非EdgeOne环境降级处理）
-    if (!clientIp) {
+    // 如果没有获取到客户端IP
+    if (!ip) {
         console.warn('无法获取 clientIp，可能不在 EdgeOne 环境中运行');
         // 降级：尝试从请求头获取
         const fallbackIp = request.headers.get('x-forwarded-for')?.split(',')[0] ||
@@ -349,7 +355,7 @@ export async function onRequestGet({request, env, clientIp: envClientIp}) {
         }
     } else {
         // 速率限制检查（使用 IP + UUID 组合键）
-        const rateLimitResult = checkRateLimit(clientIp);
+        const rateLimitResult = checkRateLimit(ip);
         if (!rateLimitResult.allowed) {
             return new Response('请求过于频繁，请稍后再试', {
                 status: 429,
@@ -362,7 +368,7 @@ export async function onRequestGet({request, env, clientIp: envClientIp}) {
     }
 
     // 防盗链检查
-    if (!isRefererAllowed(request, env)) {
+    if (!isRefererAllowed(request, env, clientIp)) {
         const url = new URL(request.url);
         // 返回一个 1x1 透明像素或直接返回 403
         if (url.searchParams.get('strict') === 'true') {
