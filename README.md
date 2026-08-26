@@ -9,6 +9,16 @@
 
 glow-prow提供几种可访问方案:
 
-- 使用github raw,`raw.github.com/items/abyssal1.png`
-- 使用基于EO函数获取, `assets.glow-prow.org.cn/api?t=items&id=abyssal1`
-- 使用基于EO(全球)函数获取, `assets.glow-prow.top/api?t=items&id=abyssal1`
+**原始**
+- 使用github raw,`raw.github.com/items/culverin/basilisk1.webp`
+
+**中间件**
+
+- 使用基于EO函数获取, `assets.glow-prow.org.cn/api?t=AUTO_items&id=basilisk1` and `assets.glow-prow.org.cn/api?t=culverin&id=basilisk1`
+- 使用基于EO(全球)函数获取, `assets.glow-prow.top/api?t=AUTO_items&id=abyssal1`
+
+t: 代表类型
+- 当t等于AUTO_items表示则自动从可选路径查询，在已有路径并行请求检查，将更久时间; AUTO_items仅支持item类型，不支持npcs等其他
+- 当指定data数据中type则精准从对应类型目录下获取
+
+id: 代表id，物品具体映射表内标识
