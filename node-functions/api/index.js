@@ -79,7 +79,7 @@ const RESOURCE_CONFIG = {
             '/treasureMaps/recent',
             '/treasureMaps/veryOld',
         ],
-        'treasureMaps/legendary': ['/treasureMaps/legendary'],
+        'treasureMaps/legend': ['/treasureMaps/legendary'],
         'treasureMaps/old': ['/treasureMaps/old'],
         'treasureMaps/recent': ['/treasureMaps/recent'],
         'treasureMaps/veryOld': ['/treasureMaps/veryOld'],
