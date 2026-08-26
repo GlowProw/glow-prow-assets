@@ -38,30 +38,31 @@ const RESOURCE_CONFIG = {
         ],
         // ── items 精确子类型（来自 items.json 的全量 type，1次请求直接命中）──
         // 通用类
-        ammunition:         ['/items/ammunitions'],
-        armor:              ['/items/armors'],
-        chest:              ['/items/chests'],
-        consumable:         ['/items/consumables'],
-        contract:           ['/items/contracts'],
-        quest:              ['/items/quests'],
-        tool:               ['/items/tools'],
+        ammunition: ['/items/ammunitions'],
+        armor: ['/items/armors'],
+        chest: ['/items/chests'],
+        consumable: ['/items/consumables'],
+        contract: ['/items/contracts'],
+        quest: ['/items/quests'],
+        tool: ['/items/tools'],
         // 家具类
-        majorFurniture:     ['/items/majorFurnitures'],
+        majorFurniture: ['/items/majorFurnitures'],
         offensiveFurniture: ['/items/offensiveFurnitures'],
-        utilityFurniture:   ['/items/utilityFurnitures'],
+        utilityFurniture: ['/items/utilityFurnitures'],
         // 武器类（各自独立目录）
-        culverin:           ['/items/culverin'],
-        demicannon:         ['/items/demicannon'],
-        ballista:           ['/items/ballista'],
-        bombard:            ['/items/bombard'],
-        mortar:             ['/items/mortar'],
-        rocket:             ['/items/rocket'],
-        seaFire:            ['/items/seaFire'],
-        springloader:       ['/items/springloader'],
-        longGun:            ['/items/longGuns'],
-        torpedo:            ['/items/torpedos'],
+        culverin: ['/items/culverin'],
+        demicannon: ['/items/demicannon'],
+        ballista: ['/items/ballista'],
+        bombard: ['/items/bombard'],
+        mortar: ['/items/mortar'],
+        rocket: ['/items/rocket'],
+        seaFire: ['/items/seaFire'],
+        springloader: ['/items/springloader'],
+        longGun: ['/items/longGuns'],
+        torpedo: ['/items/torpedos'],
         // 船只类
-        shipUpgrade:        ['/ships/shipUpgrades'],
+        shipUpgrade: ['/ships/shipUpgrades'],
+
         // ── 其他独立分类 ──
         commodities: ['/commodities'],
         damages: ['/damages'],
@@ -69,13 +70,20 @@ const RESOURCE_CONFIG = {
         materials: ['/materials'],
         modifications: ['/modifications'],
         npcs: ['/npcs'],
-        ships: ['/ships', '/ships/shipUpgrades'],
-        treasureMaps: [
+        ships: ['/ships'],
+
+        // ── treasureMaps 兜底与精确子分类 ──
+        AUTO_treasureMaps: [
             '/treasureMaps/legendary',
             '/treasureMaps/old',
             '/treasureMaps/recent',
             '/treasureMaps/veryOld',
         ],
+        'treasureMaps/legendary': ['/treasureMaps/legendary'],
+        'treasureMaps/old': ['/treasureMaps/old'],
+        'treasureMaps/recent': ['/treasureMaps/recent'],
+        'treasureMaps/veryOld': ['/treasureMaps/veryOld'],
+
         ultimates: ['/ultimates'],
         vanities: ['/vanities/cosmetics'],
         sets: ['/vanities/sets']
@@ -286,10 +294,13 @@ export async function onRequestGet({ request, env, geo, clientIp }) {
         });
     }
 
-    if (!RESOURCE_CONFIG.basePaths[t]) {
+    const decodedCategory = decodeURIComponent(t);
+    const decodedId = decodeURIComponent(id);
+
+    if (!RESOURCE_CONFIG.basePaths[decodedCategory]) {
         return new Response(JSON.stringify({
             error: '无效的分类',
-            message: `分类 "${t}" 未配置`,
+            message: `分类 "${decodedCategory}" 未配置`,
             availableCategories: Object.keys(RESOURCE_CONFIG.basePaths)
         }), {
             status: 400,
@@ -301,8 +312,6 @@ export async function onRequestGet({ request, env, geo, clientIp }) {
     }
 
     try {
-        const decodedCategory = decodeURIComponent(t);
-        const decodedId = decodeURIComponent(id);
         const securityHeaders = getSecurityHeaders(request, env);
 
         // Promise.any 并行竞速 —— 所有路径同时请求，第一个成功就返回
