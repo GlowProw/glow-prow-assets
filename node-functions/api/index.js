@@ -11,21 +11,58 @@ const TEST_URL = 'http://localhost:8088'
 // 路径配置
 const RESOURCE_CONFIG = {
     basePaths: {
-        items: [
+        // ── AUTO_items 兜底（type 未知时并行竞速全部目录）──
+        AUTO_items: [
             '/items',
             '/items/ammunitions',
             '/items/armors',
             '/items/chests',
             '/items/consumables',
+            '/items/contracts',
+            '/items/culverin',
+            '/items/demicannon',
+            '/items/ballista',
+            '/items/bombard',
+            '/items/mortar',
+            '/items/rocket',
+            '/items/seaFire',
+            '/items/springloader',
+            '/items/longGuns',
+            '/items/torpedos',
             '/items/majorFurnitures',
             '/items/offensiveFurnitures',
             '/items/tools',
             '/items/utilityFurnitures',
+            '/items/quests',
             '/ships/shipUpgrades',
-            '/items/weapons',
-            '/items/weapons/longGuns',
-            '/items/weapons/torpedos',
         ],
+        // ── items 精确子类型（来自 items.json 的全量 type，1次请求直接命中）──
+        // 通用类
+        ammunition:         ['/items/ammunitions'],
+        armor:              ['/items/armors'],
+        chest:              ['/items/chests'],
+        consumable:         ['/items/consumables'],
+        contract:           ['/items/contracts'],
+        quest:              ['/items/quests'],
+        tool:               ['/items/tools'],
+        // 家具类
+        majorFurniture:     ['/items/majorFurnitures'],
+        offensiveFurniture: ['/items/offensiveFurnitures'],
+        utilityFurniture:   ['/items/utilityFurnitures'],
+        // 武器类（各自独立目录）
+        culverin:           ['/items/culverin'],
+        demicannon:         ['/items/demicannon'],
+        ballista:           ['/items/ballista'],
+        bombard:            ['/items/bombard'],
+        mortar:             ['/items/mortar'],
+        rocket:             ['/items/rocket'],
+        seaFire:            ['/items/seaFire'],
+        springloader:       ['/items/springloader'],
+        longGun:            ['/items/longGuns'],
+        torpedo:            ['/items/torpedos'],
+        // 船只类
+        shipUpgrade:        ['/ships/shipUpgrades'],
+        // ── 其他独立分类 ──
         commodities: ['/commodities'],
         damages: ['/damages'],
         factions: ['/factions'],
@@ -43,7 +80,7 @@ const RESOURCE_CONFIG = {
         vanities: ['/vanities/cosmetics'],
         sets: ['/vanities/sets']
     },
-    extensions: ['.webp', '.png'],
+    extensions: ['.webp'],
     emptyImagePath: '/empty.webp'
 };
 
@@ -57,7 +94,7 @@ const ANTI_LEECH_CONFIG = {
     // 允许空 Referer（直接访问）
     allowEmptyReferer: true,
     // 缓存时间（秒）
-    cacheTime: 21600,               // 24小时
+    cacheTime: 21600,               // 6小时
     // 空图片缓存时间（秒）
     emptyImageCacheTime: 3600       // 1小时
 };
@@ -194,6 +231,23 @@ function createTransparentPixelResponse(request, env) {
 }
 
 /**
+ * 并行竞速：同时发出所有路径请求，返回第一个成功的响应
+ * 比串行快数倍，尤其对 items 类（13个路径 × 2种扩展名 = 26个候选）
+ */
+async function fetchImageParallel(patterns, originURL) {
+    const fetchPromises = patterns.map(pattern => {
+        const imageUrl = new URL(pattern, originURL);
+        return fetch(imageUrl).then(response => {
+            if (response.ok) return response;
+            return Promise.reject(new Error(`HTTP ${response.status}: ${imageUrl}`));
+        });
+    });
+
+    // Promise.any：第一个成功的就返回，全部失败才抛出 AggregateError
+    return Promise.any(fetchPromises);
+}
+
+/**
  * 主请求处理函数
  */
 export async function onRequestGet({ request, env, geo, clientIp }) {
@@ -249,40 +303,36 @@ export async function onRequestGet({ request, env, geo, clientIp }) {
     try {
         const decodedCategory = decodeURIComponent(t);
         const decodedId = decodeURIComponent(id);
+        const securityHeaders = getSecurityHeaders(request, env);
 
+        // Promise.any 并行竞速 —— 所有路径同时请求，第一个成功就返回
+        // 原来串行最坏需等待 N 次请求，现在只需等待最快的那一个
         const patterns = generatePathPatterns(decodedCategory, decodedId);
+        const originURL = getOriginURL(env);
 
-        for (const pattern of patterns) {
-            try {
-                const imageUrl = new URL(pattern, getOriginURL(env));
-                const response = await fetch(imageUrl);
+        try {
+            const response = await fetchImageParallel(patterns, originURL);
 
-                if (response.ok) {
-                    if (debug) {
-                        console.log('找到图片:', imageUrl.toString());
-                    }
+            if (debug) console.log('并行竞速命中图片');
 
-                    const contentType = response.headers.get('content-type');
-                    const imageData = await response.arrayBuffer();
-                    const securityHeaders = getSecurityHeaders(request, env);
+            const contentType = response.headers.get('content-type');
+            const imageData = await response.arrayBuffer();
 
-                    return new Response(imageData, {
-                        status: 200,
-                        headers: {
-                            ...securityHeaders,
-                            'Content-Type': contentType,
-                            'Cache-Control': `public, max-age=${ANTI_LEECH_CONFIG.cacheTime}`,
-                        }
-                    });
+            return new Response(imageData, {
+                status: 200,
+                headers: {
+                    ...securityHeaders,
+                    'Content-Type': contentType,
+                    'Cache-Control': `public, max-age=${ANTI_LEECH_CONFIG.cacheTime}`,
                 }
-            } catch (e) {
-                console.error('获取图片时出错:', e);
-                continue;
-            }
+            });
+
+        } catch (e) {
+            // Promise.any 全部失败 (AggregateError)，所有路径均无图片，返回空图片占位
+            if (debug) console.log('所有路径均未找到图片，返回空图片');
+            return await getEmptyImageResponse(request, env);
         }
 
-        // 所有路径都失败，返回空图片
-        return await getEmptyImageResponse(request, env);
     } catch (error) {
         console.error('处理请求时出错:', error);
         return await getEmptyImageResponse(request, env);
