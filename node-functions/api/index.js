@@ -87,7 +87,7 @@ const RESOURCE_CONFIG = {
         ultimates: ['/ultimates'],
         vanities: ['/vanities/cosmetics'],
         sets: ['/vanities/sets'],
-        mastery: ['/mastery', '/mastery/information']
+        mastery: ['/mastery']
     },
     extensions: ['.webp'],
     emptyImagePath: '/empty.webp'
