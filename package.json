@@ -4,7 +4,8 @@
   "version": "0.0.2",
   "type": "module",
   "scripts": {
-    "test": "edgeone pages dev"
+    "dev": "edgeone pages dev",
+    "test:organize": "node ./srcipt/organize_downloads.js"
   },
   "files": [
     "items",
@@ -18,6 +19,6 @@
     "materials",
     "treasureMaps",
     "vanities",
-    "mastery"
+    "masteryy"
   ]
 }
