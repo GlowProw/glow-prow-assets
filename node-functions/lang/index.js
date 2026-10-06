@@ -5,7 +5,6 @@
  */
 
 const ORIGIN_URL = 'https://lang.glow-prow.top';
-const TEST_URL = 'http://localhost:8089';
 
 // 支持的语言列表
 const SUPPORTED_LOCALES = ['zh_CN', 'zh_TW', 'en_US'];
@@ -41,13 +40,8 @@ const CATEGORY_FILES = [
     'map'
 ];
 
-function isDebug(env) {
-    return (env.NODE_ENV || 'production') === 'development';
-}
-
 function getOriginURL(env) {
-    if (isDebug(env)) return env.TARGET_TEST_DOMAIN || TEST_URL;
-    return env.TARGET_DOMAIN || ORIGIN_URL;
+    return ORIGIN_URL;
 }
 
 function getCorsHeaders() {
@@ -78,9 +72,9 @@ function jsonResponse(data, status = 200, extra = {}) {
  * 主请求处理函数
  * GET /lang?locale=zh_CN&category=ships[&key=someKey]
  */
-export async function onRequestGet({ request, env }) {
+export async function onRequestGet({request, env}) {
     if (request.method === 'OPTIONS') {
-        return new Response(null, { status: 204, headers: getCorsHeaders() });
+        return new Response(null, {status: 204, headers: getCorsHeaders()});
     }
 
     const url = new URL(request.url);
@@ -115,9 +109,10 @@ export async function onRequestGet({ request, env }) {
     }
 
     const originURL = getOriginURL(env);
-    const fileUrl = `${originURL}/${locale}/${category}.json`;
+    const fileUrl = `${originURL}/src/data/${locale}/${category}.json`;
 
     try {
+        console.log('[path]:', fileUrl)
         const response = await fetch(fileUrl);
 
         if (!response.ok) {
@@ -141,10 +136,10 @@ export async function onRequestGet({ request, env }) {
                     key
                 }, 404);
             }
-            return jsonResponse({ locale, category, key, value: data[key] });
+            return jsonResponse({locale, category, key, value: data[key]});
         }
 
-        return jsonResponse({ locale, category, data });
+        return jsonResponse({locale, category, data});
 
     } catch (error) {
         return jsonResponse({
