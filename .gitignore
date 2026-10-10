@@ -6,3 +6,5 @@
 .tef_dist/*
 
 /srcipt/
+/.venv/
+/.information/
