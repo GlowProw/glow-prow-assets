@@ -1,7 +1,7 @@
 {
   "name": "glow-prow-assets",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.9",
   "type": "module",
   "scripts": {
     "dev": "edgeone pages dev",
@@ -19,6 +19,10 @@
     "materials",
     "treasureMaps",
     "vanities",
-    "masteryy"
-  ]
+    "masteryy",
+    "skills"
+  ],
+  "dependencies": {
+    "edgeone": "^1.6.46"
+  }
 }
