@@ -70,6 +70,7 @@ const RESOURCE_CONFIG = {
         materials: ['/materials'],
         modifications: ['/modifications'],
         npcs: ['/npcs'],
+        enemies: ['/enemies'],
         ships: ['/ships'],
 
         // ── treasureMaps 兜底与精确子分类 ──

@@ -33,6 +33,7 @@ const CATEGORY_FILES = [
     'regions',
     'territories',
     'npcs',
+    'enemies',
     'treasureMaps',
     'zones',
     'masterys',

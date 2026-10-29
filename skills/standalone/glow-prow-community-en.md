@@ -1,13 +1,15 @@
 ---
-name: glow-prow-community-query-skill (standalone)
+name: glow-prow (standalone)
 description: Query public ship loadouts (assemblies), Codex item catalog, Twitch Drops, season calendar events, and service status for Glow Prow (Skull and Bones player community). Standalone single-file edition for direct usage in any AI assistant.
 version: 2.0.0
 ---
 
-# Glow Prow Community Data Query Skill (Standalone Edition)
+# Glow Prow (Standalone Edition)
 
 > Standalone single-file edition ready to be copied into AI assistants supporting custom instructions / system prompts (ChatGPT, Claude, DeepSeek, Doubao, etc.).
 > Backend REST API Base: `https://api.glow-prow.top/api/` (Local debugging: `http://localhost:3000/api/`).
+> Update URL: `https://raw.githubusercontent.com/GlowProw/glow-prow-assets/main/skills/standalone/glow-prow-community-en.md`
+> Skills Repository: `https://github.com/GlowProw/glow-prow-assets/tree/main/skills`
 
 ## 1. Authentication (Optional / On Demand)
 

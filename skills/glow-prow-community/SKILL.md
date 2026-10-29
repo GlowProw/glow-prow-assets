@@ -1,13 +1,15 @@
 ---
-name: glow-prow-社区数据查询技能书
-description: 查询 Glow Prow（碧海黑帆 / 闪耀船首）社区平台的公开配装、Codex 物品图鉴、Twitch 掉宝活动、赛季事件日历与全站服务状态。提供登录认证、公开与私有配装详情、物品分类与图片、掉宝活动监控、日历事件及 ICS 订阅导出等真实 REST API 规范与文本展示模板。
+name: 闪耀船首
+description: 查询 闪耀船首（碧海黑帆 / 闪耀船首）社区平台的公开配装、Codex 物品图鉴、Twitch 掉宝活动、赛季事件日历与全站服务状态。提供登录认证、公开与私有配装详情、物品分类与图片、掉宝活动监控、日历事件及 ICS 订阅导出等真实 REST API 规范与文本展示模板。
 version: 2.0.0
 ---
 
-# Glow Prow 社区数据查询技能书
+# 闪耀船首
 
 > 适用平台：豆包（Doubao）、ChatGPT、Claude、深度求索（DeepSeek）等支持“自定义指令 / 系统提示 / 技能”的 AI 助手。
 > 数据接口：Glow Prow 官方后端 REST API，与官方 MCP 协议服务功能对齐。
+> 技能书更新地址：`https://raw.githubusercontent.com/GlowProw/glow-prow-assets/main/skills/glow-prow-community/SKILL.md`
+> 官方技能仓库：`https://github.com/GlowProw/glow-prow-assets/tree/main/skills`
 
 ## 一、技能简介
 

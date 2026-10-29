@@ -20,7 +20,8 @@
     "treasureMaps",
     "vanities",
     "masteryy",
-    "skills"
+    "skills",
+    "enemies"
   ],
   "dependencies": {
     "edgeone": "^1.6.46"

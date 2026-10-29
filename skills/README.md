@@ -21,6 +21,17 @@ skills/
 
 ---
 
+## 技能书更新与下载地址
+
+- **官方仓库主页**：[https://github.com/GlowProw/glow-prow-assets/tree/main/skills](https://github.com/GlowProw/glow-prow-assets/tree/main/skills)
+- **最新版 Raw 直链（用于自动同步或一键导入）**：
+  - 中文自包含版：`https://raw.githubusercontent.com/GlowProw/glow-prow-assets/main/skills/standalone/glow-prow-community-zh.md`
+  - 英文自包含版：`https://raw.githubusercontent.com/GlowProw/glow-prow-assets/main/skills/standalone/glow-prow-community-en.md`
+  - 标准完整技能文件：`https://raw.githubusercontent.com/GlowProw/glow-prow-assets/main/skills/glow-prow-community/SKILL.md`
+  - Codex 目录索引库：`https://raw.githubusercontent.com/GlowProw/glow-prow-assets/main/skills/glow-prow-community/codex-catalog.json`
+
+---
+
 ## 各版本适用场景与导入方式
 
 ### 1. 网页端 AI 对话助手（豆包、ChatGPT、Claude、深度求索 DeepSeek、Kimi 等）
