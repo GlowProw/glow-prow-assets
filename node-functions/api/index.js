@@ -248,8 +248,17 @@ async function fetchImageParallel(patterns, originURL) {
     const fetchPromises = patterns.map(pattern => {
         const imageUrl = new URL(pattern, originURL);
         return fetch(imageUrl).then(response => {
-            if (response.ok) return response;
-            return Promise.reject(new Error(`HTTP ${response.status}: ${imageUrl}`));
+            if (!response.ok) {
+                return Promise.reject(new Error(`HTTP ${response.status}: ${imageUrl}`));
+            }
+
+            // 静态服务器对不存在的路径可能回退到 HTML，只有图片响应才算命中
+            const contentType = response.headers.get('content-type') || '';
+            if (!/^image\//i.test(contentType) && !/^application\/octet-stream/i.test(contentType)) {
+                return Promise.reject(new Error(`非图片响应 ${contentType}: ${imageUrl}`));
+            }
+
+            return response;
         });
     });
 
