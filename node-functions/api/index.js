@@ -72,6 +72,7 @@ const RESOURCE_CONFIG = {
         npcs: ['/npcs'],
         enemies: ['/enemies'],
         ships: ['/ships'],
+        perks: ['/perks'],
 
         // ── treasureMaps 兜底与精确子分类 ──
         AUTO_treasureMaps: [

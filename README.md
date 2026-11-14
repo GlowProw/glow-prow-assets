@@ -1,9 +1,13 @@
 # 关于
 
-这是glow-prow的资源集，它的来源包含`skullandbonestools.de` `skull and bones wiki`等互联网上收集资源
+这是glow-prow的资源集，它的来源包含`skullandbonestools.de` `skull and bones wiki` `ubisoft` 等网络上收集的素材
 
 > 这是一个面向Glow-Prow镜像，弥补S&B Tool源在国内资源访问过慢和因vercel在中国防火墙列入黑名单导致无法访问问题
 > Glow-Prow主程序有S&B Tool选择源，如果可用的话 :P
+
+## 免责
+
+此仓库提供的素材并含ubisoft官方提供，仅用于个人学习和研究，不涉及任何商业用途。
 
 ## 使用资源
 
